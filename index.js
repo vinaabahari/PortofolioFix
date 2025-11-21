@@ -2,7 +2,6 @@ const express = require("express");
 const dotenv = require("dotenv").config();
 const path = require("path");
 const session = require("express-session");
-const connectDB = require("./config/db");
 const fs = require("fs");
 
 const authRoutes = require("./routes/authRoutes");
@@ -11,8 +10,6 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-connectDB();
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));

@@ -1,65 +1,60 @@
-//fungsi untuk render halaman register
-const User = require("../models/userModel");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcryptjs");
+const { findUserByUsername, createUser } = require("../services/userService");
 
-const authController = {
-    getRegister: (req, res) => {
-        res.render("register");
-    },
-    getLogin: (req, res) => {
-        res.render("login");
-    },
-    register: async (req, res) => {
-    try {
-        const { nama, username, password} = req.body;
+module.exports = {
+  // Halaman login
+  loginPage: (req, res) => {
+    res.render("auth/login");
+  },
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = new User({
-        nama_user: nama,
-        username,
-        password: hashedPassword,
-        role: "user",
-        });
-
-        await user.save();
-        res.redirect('/auth/login');
-    } catch (error) {
-        console.log(error);
-        res.status(500).send("Terjadi kesalahan");
-    }
-    },
-    login: async (req, res) => {
-  try {
+  // Login
+  login: async (req, res) => {
     const { username, password } = req.body;
+    const user = await findUserByUsername(username);
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).send("Username atau password salah");
+    if (!user) return res.send("User tidak ditemukan");
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.send("Password salah");
+
+    // Simpan user di session
+    req.session.user = user;
+
+    // Redirect berdasarkan role
+    if (user.role === 'admin') {
+      res.redirect("/admin/foto"); // admin ke dashboard admin
+    } else {
+      res.redirect("/home");       // user biasa ke halaman home
     }
+  },
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).send("Username atau password salah");
+  // Halaman register
+  registerPage: (req, res) => {
+    res.render("auth/register");
+  },
+
+  // Register
+  register: async (req, res) => {
+    const { nama_user, username, password } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+
+    try {
+      await createUser({ nama_user, username, password: hash, role: 'user' });
+      res.redirect("/auth/login"); // pastikan path absolute
+    } catch (err) {
+      res.send(err.message);
     }
+  },
 
-    req.session.user = {
-      id: user._id,
-      username: user.username,
-      nama: user.nama_user,
-      role: user.role
-    };
-
-    res.redirect('/home');
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("Terjadi kesalahan");
+  // Logout
+  logout: (req, res) => {
+    req.session.destroy(err => {
+      if (err) {
+        console.log(err);
+        return res.redirect('/');
+      }
+      res.clearCookie('connect.sid'); // hapus cookie session
+      res.redirect('/auth/login');    // arahkan ke login
+    });
   }
-},
-logout: async(req, res) =>{
-  req.session.destroy();
-  res.redirect('/home');
-}
 };
-
-module.exports = authController;

@@ -1,12 +1,13 @@
-const Photo = require("../models/imageModel");
-const path = require("path");
-const fs = require("fs");
-
+const { getAllImages, createImage, getImageById, updateImageById, deleteImageById } = require("../services/imageService");
+const supabase = require("../config/supabase");
+const { v4: uuid } = require('uuid');
 
 const adminController = {
+
+  // Tampilkan halaman admin + daftar foto
   getAdmin: async (req, res) => {
     try {
-      const images = await Photo.find().sort({ createdAt: -1 });
+      const images = await getAllImages();
       res.render("admin", { images, filter: null });
     } catch (error) {
       console.error("❌ Gagal memuat halaman admin:", error);
@@ -14,76 +15,107 @@ const adminController = {
     }
   },
 
+  // Tambah foto baru
   addPhoto: async (req, res) => {
     try {
-      const { judul, bulan, keterangan, link, detail } = req.body; // ✅ tambahkan detail
-      const foto = `/img/${req.file.filename}`;
+      const { judul, bulan, keterangan, link, detail } = req.body;
 
-      await Photo.create({ judul, bulan, keterangan, link, detail, foto }); // ✅ simpan detail
+      // === UPLOAD KE SUPABASE STORAGE ===
+      const fileExt = req.file.originalname.split('.').pop();
+      const fileName = `foto-${uuid()}.${fileExt}`;
 
-      console.log("✅ Foto berhasil ditambahkan:", judul);
-      res.redirect("/admin/foto");
-    } catch (error) {
-      console.error("❌ Gagal menyimpan data foto:", error);
-      res.status(500).send("Gagal menyimpan data foto");
-    }
-  },
+      const { error: uploadError } = await supabase.storage
+        .from(process.env.SUPABASE_BUCKET)
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+        });
 
-  editForm: async (req, res) => {
-    try {
-      const photo = await Photo.findById(req.params.id);
-      if (!photo) return res.status(404).send("Foto tidak ditemukan.");
-
-      res.render("edit", { image: photo });
-    } catch (error) {
-      console.error("❌ Gagal memuat form edit:", error);
-      res.status(500).send("Gagal memuat form edit.");
-    }
-  },
-
-  updatePhoto: async (req, res) => {
-    try {
-      const { judul, bulan, keterangan, link, detail } = req.body; // ✅ tambahkan detail
-      const id = req.params.id;
-
-      const photo = await Photo.findById(id);
-      if (!photo) return res.status(404).send("Foto tidak ditemukan.");
-
-      let fotoPath = photo.foto;
-
-      if (req.file) {
-        const oldPath = path.join(__dirname, "..", "public", photo.foto);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        fotoPath = `/img/${req.file.filename}`;
+      if (uploadError) {
+        console.log("Upload Error:", uploadError);
+        return res.status(500).send("Gagal upload gambar ke Supabase");
       }
 
-      await Photo.findByIdAndUpdate(id, { judul, bulan, keterangan, link, detail, foto: fotoPath }); // ✅ update detail juga
+      // Ambil public URL
+      const { data: publicUrl } = supabase.storage
+        .from(process.env.SUPABASE_BUCKET)
+        .getPublicUrl(fileName);
 
-      console.log("✅ Foto berhasil diperbarui:", judul);
+      // === SIMPAN KE DATABASE TANPA fileName ===
+      await createImage({
+        judul,
+        bulan,
+        keterangan,
+        link,
+        detail,
+        foto: publicUrl.publicUrl
+      });
+
+      console.log("✅ Foto ditambahkan:", judul);
       res.redirect("/admin/foto");
+
     } catch (error) {
-      console.error("❌ Gagal memperbarui foto:", error);
-      res.status(500).send("Gagal memperbarui foto.");
+      console.error("❌ Gagal menyimpan foto:", error);
+      res.status(500).send("Gagal menyimpan foto");
     }
   },
 
+  // Form edit foto
+  editForm: async (req, res) => {
+    try {
+      const image = await getImageById(req.params.id);
+      res.render("admin/edit", { image });
+    } catch (error) {
+      console.error("❌ Gagal memuat form edit:", error);
+      res.status(500).send("Terjadi kesalahan saat memuat form edit.");
+    }
+  },
+
+  // Update foto
+  updatePhoto: async (req, res) => {
+    try {
+      const { judul, bulan, keterangan, link, detail } = req.body;
+      const updateData = { judul, bulan, keterangan, link, detail };
+
+      // Jika ada foto baru
+      if (req.file) {
+        const fileExt = req.file.originalname.split('.').pop();
+        const fileName = `foto-${uuid()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(process.env.SUPABASE_BUCKET)
+          .upload(fileName, req.file.buffer, {
+            contentType: req.file.mimetype,
+          });
+
+        if (uploadError) return res.status(500).send("Gagal upload gambar baru");
+
+        const { data: publicUrl } = supabase.storage
+          .from(process.env.SUPABASE_BUCKET)
+          .getPublicUrl(fileName);
+
+        updateData.foto = publicUrl.publicUrl;
+      }
+
+      await updateImageById(req.params.id, updateData);
+      res.redirect("/admin/foto");
+
+    } catch (error) {
+      console.error("❌ Gagal update foto:", error);
+      res.status(500).send("Gagal update foto");
+    }
+  },
+
+  // Hapus foto
   deletePhoto: async (req, res) => {
     try {
-      const photo = await Photo.findById(req.params.id);
-      if (!photo) return res.status(404).send("Foto tidak ditemukan.");
-
-      const filePath = path.join(__dirname, "..", "public", photo.foto);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-
-      await Photo.findByIdAndDelete(req.params.id);
-
-      console.log("🗑️  Foto dihapus:", photo.judul);
+      await deleteImageById(req.params.id);
       res.redirect("/admin/foto");
     } catch (error) {
-      console.error("❌ Gagal menghapus foto:", error);
-      res.status(500).send("Terjadi kesalahan saat menghapus foto.");
+      console.error("❌ Gagal hapus foto:", error);
+      res.status(500).send("Gagal hapus foto");
     }
-  },
+  }
+
 };
 
 module.exports = adminController;

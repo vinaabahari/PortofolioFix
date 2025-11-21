@@ -1,34 +1,39 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - Tambah Foto Kegiatan</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
     body {
-      background-color: palevioletred; /* pink lembut */
+      background-color: palevioletred;
+      /* pink lembut */
     }
 
     /* ==== CARD RESPONSIVE UNTUK ADMIN PAGE ==== */
-.card {
-  border: none !important; /* gak ada garis border */
-  border-radius: 20px !important;
-  background: #fff;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(255, 111, 145, 0.25); /* pink soft shadow */
-  transition: all 0.35s ease;
-  position: relative;
-}
+    .card {
+      border: none !important;
+      /* gak ada garis border */
+      border-radius: 20px !important;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(255, 111, 145, 0.25);
+      /* pink soft shadow */
+      transition: all 0.35s ease;
+      position: relative;
+    }
 
-.card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 30px rgba(255, 111, 145, 0.4) !important; /* bayangan pink makin tegas saat hover */
-}
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 30px rgba(255, 111, 145, 0.4) !important;
+      /* bayangan pink makin tegas saat hover */
+    }
 
     .card img {
       width: 100%;
@@ -46,7 +51,7 @@
       color: black;
     }
 
-        /* === COLLAPSE === */
+    /* === COLLAPSE === */
     .collapse p {
       font-size: 0.9rem;
       color: #555;
@@ -92,26 +97,21 @@
     }
 
 
-.angka {
-  color: black;
-  margin-left: 5px;
-  font-size: 20px;
-}
-
-
+    .angka {
+      color: black;
+      margin-left: 5px;
+      font-size: 20px;
+    }
   </style>
 </head>
 <body>
   <%- include('layout/header') %>
-
   <div class="container py-5 container-custom">
     <h2 class="text-center mb-4">Form Tambah Projek</h2>
-
     <!-- Form Upload -->
     <form action="/admin/foto" method="POST" enctype="multipart/form-data"
-          class="d-flex flex-wrap gap-2 justify-content-center mb-5">
+      class="d-flex flex-wrap gap-2 justify-content-center mb-5">
       <input type="text" name="judul" placeholder="Judul gambar" class="form-control w-25" required>
-
       <select name="bulan" class="form-select w-25" required>
         <option value="">Pilih Bulan</option>
         <option value="Juni">Juni</option>
@@ -120,7 +120,6 @@
         <option value="September">September</option>
         <option value="Oktober">Oktober</option>
       </select>
-
       <input type="text" name="keterangan" placeholder="Keterangan kegiatan" class="form-control w-25">
       <input type="text" name="detail" placeholder="Detail kegiatan (opsional)" class="form-control w-25">
       <input type="text" name="link" placeholder="Link proyek (opsional)" class="form-control w-25">
@@ -129,68 +128,71 @@
     </form>
 
     <!-- Daftar Foto -->
-<h2 class="fw-semibold mb-3 text-center">
-  Daftar Projek <%= filter ? `(Bulan ${filter})` : '' %>
-  <% if (images && images.length > 0) { %>
-    <span class="angka"><%= images.length %></span>
-  <% } %>
-</h2>
-
+    <h2 class="fw-semibold mb-3 text-center">
+      Daftar Projek
+      <% if (filter) { %>
+        (Bulan <%= filter %>)
+      <% } %>
+      <% if (images && images.length > 0) { %>
+        <span class="angka"><%= images.length %></span>
+      <% } %>
+    </h2>
 
     <div class="row g-4 mt-2">
-<% if (!images || images.length === 0) { %>
-  <p class="text-center text-muted">Belum ada foto yang diunggah.</p>
-<% } else { %>
-  <% images.forEach(img => { %>
-    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-      <div class="card">
-        <img src="<%= img.foto %>" class="card-img-top" alt="<%= img.judul %>">
-        <div class="card-body text-left">
-          <div class="d-flex justify-content-left align-items-left mb-2">
-            <h6 class="fw-bold mb-0 me-2"><%= img.judul %></h6>
-            <% if (img.link) { %>
-              <a href="<%= img.link %>" target="_blank" class="text-decoration-none link-icon">
-                <i class="bi bi-link-45deg"></i>
-              </a>
-            <% } %>
-          </div>
+      <% if (!images || images.length === 0) { %>
+        <p class="text-center text-muted">Belum ada foto yang diunggah.</p>
+      <% } else { %>
+        <% images.forEach(img => { %>
+          <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+            <div class="card">
+              <img src="<%= img.foto %>" class="card-img-top" alt="<%= img.judul %>">
+              <div class="card-body text-left">
+                <div class="d-flex justify-content-left align-items-left mb-2">
+                  <h6 class="fw-bold mb-0 me-2"><%= img.judul %></h6>
+                  <% if (img.link) { %>
+                    <a href="<%= img.link %>" target="_blank" class="text-decoration-none link-icon">
+                      <i class="bi bi-link-45deg"></i>
+                    </a>
+                  <% } %>
+                </div>
 
-          <% if (img.keterangan) { %>
-            <p class="text-muted mb-2"><%= img.keterangan %></p>
-          <% } %>
+                <% if (img.keterangan) { %>
+                  <p class="text-muted mb-2"><%= img.keterangan %></p>
+                <% } %>
 
-          <% if (img.detail) { %>
-            <p>
-              <a class="btn btn-outline-pink btn-sm mt-2"
-                 data-bs-toggle="collapse"
-                 href="#collapse<%= img._id %>"
-                 role="button"
-                 aria-expanded="false"
-                 aria-controls="collapse<%= img._id %>">
-                Lebih lengkap
-              </a>
-            </p>
-            <div class="collapse text-start" id="collapse<%= img._id %>">
-              <p class="text-muted"><%= img.detail %></p>
+                <% if (img.detail) { %>
+                  <p>
+                    <a class="btn btn-outline-pink btn-sm mt-2" 
+                       data-bs-toggle="collapse"
+                       href="#collapse<%= img.id %>"
+                       role="button" aria-expanded="false"
+                       aria-controls="collapse<%= img.id %>">
+                      Lebih lengkap
+                    </a>
+
+                    <div class="collapse text-start" id="collapse<%= img.id %>">
+                      <p class="text-muted"><%= img.detail %></p>
+                    </div>
+                  </p>
+                <% } %>
+
+                <div class="mt-3 text-end">
+                  <form action="/admin/foto/delete/<%= img.id %>" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+
+                  <a href="/admin/foto/edit/<%= img.id %>" 
+                     class="btn btn-danger btn-sm" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </div>
+              </div>
             </div>
-          <% } %>
-
-          <div class="mt-3 text-end">
-  <form action="/admin/foto/delete/<%= img._id %>" method="POST" class="d-inline">
-    <button type="submit" class="btn btn-danger btn-sm" title="Hapus">
-      <i class="bi bi-trash"></i>
-    </button>
-  </form>
-  <a href="/admin/foto/edit/<%= img._id %>" class="btn btn-danger btn-sm" title="Edit">
-    <i class="bi bi-pencil"></i>
-  </a>
-</div>
-        </div>
-      </div>
-    </div>
-  <% }) %>
-<% } %>
-
+          </div>
+        <% }) %>
+      <% } %>
     </div>
   </div>
 </body>
