@@ -63,7 +63,7 @@ const adminController = {
   editForm: async (req, res) => {
     try {
       const image = await getImageById(req.params.id);
-      res.render("admin/edit", { image });
+      res.render("edit", { image });
     } catch (error) {
       console.error("❌ Gagal memuat form edit:", error);
       res.status(500).send("Terjadi kesalahan saat memuat form edit.");
